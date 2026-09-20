@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Custo da viagem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E7E2D6;
+    --panel: #F5F2EA;
+    --panel-border: #D8D2C2;
+    --text: #1B1D1F;
+    --muted: #6B6862;
+    --amber: #C97F1E;
+    --amber-glow: rgba(201, 127, 30, 0.18);
+    --green: #2F7A4F;
+    --green-glow: rgba(47, 122, 79, 0.16);
+    --red: #A6402F;
+    --font-ui: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Roboto Mono', 'SFMono-Regular', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161A;
+      --panel: #1E2126;
+      --panel-border: #2B2F35;
+      --text: #F2EFE9;
+      --muted: #9A9D9F;
+      --amber: #F0A83E;
+      --amber-glow: rgba(240, 168, 62, 0.28);
+      --green: #52C97C;
+      --green-glow: rgba(82, 201, 124, 0.22);
+      --red: #E0685A;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #14161A;
+    --panel: #1E2126;
+    --panel-border: #2B2F35;
+    --text: #F2EFE9;
+    --muted: #9A9D9F;
+    --amber: #F0A83E;
+    --amber-glow: rgba(240, 168, 62, 0.28);
+    --green: #52C97C;
+    --green-glow: rgba(82, 201, 124, 0.22);
+    --red: #E0685A;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100%;
+    padding: 32px 16px 48px;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  .cluster {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .heading {
+    margin: 0 0 20px 2px;
+  }
+
+  .heading h1 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
+  }
+
+  .heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.4;
+    max-width: 34ch;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 24px 22px;
+    margin-bottom: 14px;
+  }
+
+  .readout {
+    padding-top: 28px;
+    padding-bottom: 22px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .readout::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, var(--amber-glow), transparent 65%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+
+  .readout.active::before {
+    opacity: 1;
+  }
+
+  .readout-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: 12px;
+    position: relative;
+  }
+
+  .readout-block {
+    flex: 1;
+  }
+
+  .readout-value {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .readout-value.cost {
+    color: var(--amber);
+  }
+
+  .readout-unit {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-left: 4px;
+    font-family: var(--font-ui);
+  }
+
+  .readout-label {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .divider-v {
+    width: 1px;
+    align-self: stretch;
+    background: var(--panel-border);
+    margin-bottom: 4px;
+  }
+
+  .status-line {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 18px;
+    min-height: 1.2em;
+  }
+
+  .status-line.warn {
+    color: var(--red);
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  button {
+    font-family: var(--font-ui);
+    border: none;
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--green);
+    color: #FBFAF7;
+    box-shadow: 0 0 0 0 var(--green-glow);
+  }
+
+  .btn-primary.stopping {
+    background: var(--red);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--panel-border);
+    padding: 16px 16px;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field .input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 0 12px;
+  }
+
+  .field .input-wrap span {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  .field input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 12px 8px 12px 4px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .history {
+    font-size: 0.85rem;
+  }
+
+  .history-title {
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-bottom: 10px;
+  }
+
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .history-row:first-of-type {
+    border-top: none;
+  }
+
+  .history-row .h-dist {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .history-row .h-cost {
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+
+  .history-empty {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .mode-toggle {
+    display: flex;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 14px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 10px 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    box-shadow: none;
+  }
+
+  .mode-btn.active {
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .field-distance {
+    margin-bottom: 14px;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 16px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    font-family: var(--font-ui);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" type="button">modo noturno</button>
+
+<div class="cluster">
+  <div class="heading">
+    <h1>Custo da viagem</h1>
+    <p>Acompanhe em tempo real a distância percorrida e quanto isso custou em gasolina — só para saber, sem cobrança nenhuma.</p>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeLiveBtn" type="button" data-mode="live">Rastrear no trajeto</button>
+    <button class="mode-btn" id="modeManualBtn" type="button" data-mode="manual">Digitar distância</button>
+  </div>
+
+  <div class="panel readout" id="readoutPanel">
+    <div class="readout-row">
+      <div class="readout-block">
+        <div class="readout-value" id="distValue">0,00<span class="readout-unit">km</span></div>
+        <div class="readout-label">distância</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="readout-block">
+        <div class="readout-value cost" id="costValue">R$ 0,00</div>
+        <div class="readout-label">custo estimado</div>
+      </div>
+    </div>
+    <div class="status-line" id="statusLine">pronto para iniciar</div>
+  </div>
+
+  <div class="controls" id="liveControls">
+    <button class="btn-primary" id="tripBtn" type="button">Iniciar viagem</button>
+    <button class="btn-secondary" id="resetBtn" type="button" title="Zerar viagem atual">Zerar</button>
+  </div>
+
+  <div class="controls" id="manualControls" style="display:none">
+    <button class="btn-primary" id="manualSaveBtn" type="button">Salvar no histórico</button>
+    <button class="btn-secondary" id="manualClearBtn" type="button" title="Limpar distância">Zerar</button>
+  </div>
+
+  <div class="panel">
+    <div class="field field-distance" id="distanceField" style="display:none">
+      <label for="distanceInput">Distância percorrida</label>
+      <div class="input-wrap">
+        <input type="number" id="distanceInput" inputmode="decimal" placeholder="10" min="0" step="0.1">
+        <span>km</span>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label for="efficiencyInput">Consumo do carro</label>
+        <div class="input-wrap">
+          <input type="number" id="efficiencyInput" inputmode="decimal" placeholder="12,5" min="1" step="0.1">
+          <span>km/L</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="priceInput">Preço do combustível</label>
+        <div class="input-wrap">
+          <span>R$</span>
+          <input type="number" id="priceInput" inputmode="decimal" placeholder="6,29" min="0" step="0.01">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel history">
+    <div class="history-title">últimas viagens</div>
+    <div id="historyList">
+      <div class="history-empty">nenhuma viagem registrada ainda</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const distValue = document.getElementById('distValue');
+  const costValue = document.getElementById('costValue');
+  const statusLine = document.getElementById('statusLine');
+  const readoutPanel = document.getElementById('readoutPanel');
+  const tripBtn = document.getElementById('tripBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const efficiencyInput = document.getElementById('efficiencyInput');
+  const priceInput = document.getElementById('priceInput');
+  const historyList = document.getElementById('historyList');
+  const themeToggle = document.getElementById('themeToggle');
+  const modeLiveBtn = document.getElementById('modeLiveBtn');
+  const modeManualBtn = document.getElementById('modeManualBtn');
+  const liveControls = document.getElementById('liveControls');
+  const manualControls = document.getElementById('manualControls');
+  const distanceField = document.getElementById('distanceField');
+  const distanceInput = document.getElementById('distanceInput');
+  const manualSaveBtn = document.getElementById('manualSaveBtn');
+  const manualClearBtn = document.getElementById('manualClearBtn');
+
+  let watchId = null;
+  let lastPosition = null;
+  let totalDistanceKm = 0;
+  let tripActive = false;
+  let bestAccuracySeen = null;
+  let mode = 'live';
+
+  // ---- persistence (per-device only) ----
+  function loadSettings() {
+    try {
+      const eff = localStorage.getItem('fuelapp_efficiency');
+      const price = localStorage.getItem('fuelapp_price');
+      const theme = localStorage.getItem('fuelapp_theme');
+      const history = localStorage.getItem('fuelapp_history');
+      if (eff) efficiencyInput.value = eff;
+      if (price) priceInput.value = price;
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = 'modo diurno';
+      }
+      if (history) renderHistory(JSON.parse(history));
+      const savedMode = localStorage.getItem('fuelapp_mode');
+      if (savedMode === 'manual') {
+        mode = 'live'; // force setMode to actually run the switch
+        setMode('manual');
+      }
+    } catch (e) {
+      console.warn('Não foi possível carregar dados salvos', e);
+    }
+  }
+
+  function saveSetting(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable, ignore */ }
+  }
+
+  function getHistory() {
+    try {
+      const raw = localStorage.getItem('fuelapp_history');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function pushHistory(entry) {
+    const hist = getHistory();
+    hist.unshift(entry);
+    while (hist.length > 8) hist.pop();
+    saveSetting('fuelapp_history', JSON.stringify(hist));
+    renderHistory(hist);
+  }
+
+  function renderHistory(hist) {
+    if (!hist || hist.length === 0) {
+      historyList.innerHTML = '<div class="history-empty">nenhuma viagem registrada ainda</div>';
+      return;
+    }
+    historyList.innerHTML = hist.map(function (h) {
+      return '<div class="history-row"><span class="h-dist">' + h.dist + ' km</span><span class="h-cost">R$ ' + h.cost + '</span></div>';
+    }).join('');
+  }
+
+  // ---- formatting (Brazilian style: comma decimal) ----
+  function fmt(n, digits) {
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  }
+
+  // ---- distance math ----
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function updateReadout() {
+    distValue.innerHTML = fmt(totalDistanceKm, 2) + '<span class="readout-unit">km</span>';
+    const efficiency = parseFloat(efficiencyInput.value);
+    const price = parseFloat(priceInput.value);
+    if (efficiency > 0 && price >= 0) {
+      const liters = totalDistanceKm / efficiency;
+      const cost = liters * price;
+      costValue.textContent = 'R$ ' + fmt(cost, 2);
+    } else {
+      costValue.textContent = 'R$ —,——';
+    }
+  }
+
+  function handlePosition(pos) {
+    const { latitude, longitude, accuracy, speed } = pos.coords;
+    bestAccuracySeen = accuracy;
+
+    // Ignore very inaccurate fixes (indoors, cold GPS start, etc.)
+    if (accuracy > 40) {
+      statusLine.textContent = 'sinal de GPS fraco (±' + Math.round(accuracy) + ' m) — aguardando melhora';
+      statusLine.classList.add('warn');
+      lastPosition = { latitude, longitude, timestamp: pos.timestamp };
+      return;
+    }
+
+    statusLine.classList.remove('warn');
+
+    if (lastPosition) {
+      const segmentKm = haversineKm(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
+      const dtSeconds = (pos.timestamp - lastPosition.timestamp) / 1000;
+      const impliedSpeedKmh = dtSeconds > 0 ? (segmentKm / dtSeconds) * 3600 : 0;
+
+      // Discard GPS jumps that would imply an unrealistic speed (glitches)
+      if (impliedSpeedKmh < 200) {
+        totalDistanceKm += segmentKm;
+      }
+      statusLine.textContent = 'gravando · precisão ±' + Math.round(accuracy) + ' m';
+    } else {
+      statusLine.textContent = 'localização encontrada · precisão ±' + Math.round(accuracy) + ' m';
+    }
+
+    lastPosition = { latitude, longitude, timestamp: pos.timestamp };
+    updateReadout();
+  }
+
+  function handleError(err) {
+    statusLine.classList.add('warn');
+    if (err.code === err.PERMISSION_DENIED) {
+      statusLine.textContent = 'permissão de localização negada — ative nas configurações do navegador';
+    } else {
+      statusLine.textContent = 'não foi possível obter localização (' + err.message + ')';
+    }
+  }
+
+  function startTrip() {
+    if (!('geolocation' in navigator)) {
+      statusLine.textContent = 'este navegador não tem suporte a localização';
+      statusLine.classList.add('warn');
+      return;
+    }
+    tripActive = true;
+    lastPosition = null;
+    totalDistanceKm = 0;
+    updateReadout();
+    readoutPanel.classList.add('active');
+    tripBtn.textContent = 'Encerrar viagem';
+    tripBtn.classList.add('stopping');
+    statusLine.classList.remove('warn');
+    statusLine.textContent = 'procurando sinal de GPS…';
+
+    watchId = navigator.geolocation.watchPosition(handlePosition, handleError, {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 20000
+    });
+  }
+
+  function stopTrip() {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    tripActive = false;
+    readoutPanel.classList.remove('active');
+    tripBtn.textContent = 'Iniciar viagem';
+    tripBtn.classList.remove('stopping');
+
+    const efficiency = parseFloat(efficiencyInput.value);
+    const price = parseFloat(priceInput.value);
+    if (totalDistanceKm > 0 && efficiency > 0 && price >= 0) {
+      const liters = totalDistanceKm / efficiency;
+      const cost = liters * price;
+      pushHistory({ dist: fmt(totalDistanceKm, 2), cost: fmt(cost, 2) });
+      statusLine.textContent = 'viagem encerrada e salva no histórico';
+    } else if (totalDistanceKm > 0) {
+      statusLine.textContent = 'viagem encerrada — preencha consumo e preço para ver o custo';
+    } else {
+      statusLine.textContent = 'viagem encerrada sem distância registrada';
+    }
+  }
+
+  function resetTrip() {
+    if (tripActive) stopTrip();
+    totalDistanceKm = 0;
+    lastPosition = null;
+    updateReadout();
+    statusLine.classList.remove('warn');
+    statusLine.textContent = 'pronto para iniciar';
+  }
+
+  function setMode(newMode) {
+    if (newMode === mode) return;
+    if (tripActive) stopTrip();
+    mode = newMode;
+    saveSetting('fuelapp_mode', mode);
+
+    const isManual = mode === 'manual';
+    modeLiveBtn.classList.toggle('active', !isManual);
+    modeManualBtn.classList.toggle('active', isManual);
+    liveControls.style.display = isManual ? 'none' : 'flex';
+    manualControls.style.display = isManual ? 'flex' : 'none';
+    distanceField.style.display = isManual ? 'block' : 'none';
+    statusLine.style.display = isManual ? 'none' : 'block';
+
+    if (isManual) {
+      const val = parseFloat(distanceInput.value);
+      totalDistanceKm = val > 0 ? val : 0;
+    } else {
+      totalDistanceKm = 0;
+      lastPosition = null;
+      statusLine.classList.remove('warn');
+      statusLine.textContent = 'pronto para iniciar';
+    }
+    readoutPanel.classList.remove('active');
+    updateReadout();
+  }
+
+  function saveManualEntry() {
+    const efficiency = parseFloat(efficiencyInput.value);
+    const price = parseFloat(priceInput.value);
+    if (!(totalDistanceKm > 0)) return;
+    if (efficiency > 0 && price >= 0) {
+      const liters = totalDistanceKm / efficiency;
+      const cost = liters * price;
+      pushHistory({ dist: fmt(totalDistanceKm, 2), cost: fmt(cost, 2) });
+      distanceInput.value = '';
+      totalDistanceKm = 0;
+      readoutPanel.classList.remove('active');
+      updateReadout();
+    }
+  }
+
+  modeLiveBtn.addEventListener('click', function () { setMode('live'); });
+  modeManualBtn.addEventListener('click', function () { setMode('manual'); });
+
+  distanceInput.addEventListener('input', function () {
+    const val = parseFloat(distanceInput.value);
+    totalDistanceKm = val > 0 ? val : 0;
+    readoutPanel.classList.toggle('active', totalDistanceKm > 0);
+    updateReadout();
+  });
+
+  manualSaveBtn.addEventListener('click', saveManualEntry);
+
+  manualClearBtn.addEventListener('click', function () {
+    distanceInput.value = '';
+    totalDistanceKm = 0;
+    readoutPanel.classList.remove('active');
+    updateReadout();
+  });
+
+  tripBtn.addEventListener('click', function () {
+    if (tripActive) stopTrip(); else startTrip();
+  });
+
+  resetBtn.addEventListener('click', resetTrip);
+
+  efficiencyInput.addEventListener('input', function () {
+    saveSetting('fuelapp_efficiency', efficiencyInput.value);
+    updateReadout();
+  });
+
+  priceInput.addEventListener('input', function () {
+    saveSetting('fuelapp_price', priceInput.value);
+    updateReadout();
+  });
+
+  themeToggle.addEventListener('click', function () {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      themeToggle.textContent = 'modo noturno';
+      saveSetting('fuelapp_theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      themeToggle.textContent = 'modo diurno';
+      saveSetting('fuelapp_theme', 'dark');
+    }
+  });
+
+  loadSettings();
+  updateReadout();
+})();
+</script>
+
+</body>
+</html>
